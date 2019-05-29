@@ -30,8 +30,17 @@ public class GenEntityMysql {
 	private boolean f_sql = false; // 是否需要导入包java.sql.*
 	private boolean f_decimal = false; // 是否需要导入包java.sql.*
 	private boolean f_date = false;// 是否需要导入包java.util.Date
+
+	// 命名规则
+	/**
+	 * 是否采用驼峰命名法 例:private String startDate;
+	 * 
+	 * 不采用则默认为 :private String start_date;
+	 */
+	private boolean isHumpNomenclature = false;
+
 	// 数据库连接
-	private static final String URL = "jdbc:mysql://localhost:3306/bms";
+	private static final String URL = "jdbc:mysql://localhost:3306/lsq";
 	private static final String NAME = "root";
 	private static final String PASS = "qqqq";
 	private static final String DRIVER = "com.mysql.jdbc.Driver";
@@ -60,48 +69,50 @@ public class GenEntityMysql {
 				System.out.println("------------------------------");
 				System.out.println("表名：" + rs.getString(3));
 				System.out.println("表所属用户名：" + rs.getString(2));
-				
+
 				String tablename = rs.getString(3);
-				this.tablename = tablename;	
-				
+				this.tablename = tablename;
+
 				// 获取表中字段的所有注释
-				PreparedStatement pStemt1 = con.prepareStatement("SELECT * FROM "+tablename);
+				PreparedStatement pStemt1 = con.prepareStatement("SELECT * FROM " + tablename);
 				ResultSet commentRs = pStemt1.executeQuery("show full columns from " + tablename);
-	            List<String> columnComments = new ArrayList<>();//列名注释集合
-	            while (commentRs.next()) {
-	                columnComments.add(commentRs.getString("Comment"));
-	            }
+				List<String> columnComments = new ArrayList<>();// 列名注释集合
+				while (commentRs.next()) {
+					columnComments.add(commentRs.getString("Comment"));
+				}
 				System.out.println(columnComments);
-				
+
 				// TODO:
-				
+
 				// 获取所有的主键
-				// oracle 语句  select table_name,dbms_metadata.get_ddl('TABLE','TABLE_NAME')from dual,user_tables where table_name='TABLE_NAME'; 
+				// oracle 语句 select
+				// table_name,dbms_metadata.get_ddl('TABLE','TABLE_NAME')from
+				// dual,user_tables where table_name='TABLE_NAME';
 				// TABLE_NAME为具体的表名,要求大写
-				String sql_table="SHOW CREATE TABLE "+tablename;
-				PreparedStatement pre=con.prepareStatement(sql_table);
-				ResultSet rs1=pre.executeQuery();
-				if(rs1.next()){
-	 
-					//正则匹配数据
+				String sql_table = "SHOW CREATE TABLE " + tablename;
+				PreparedStatement pre = con.prepareStatement(sql_table);
+				ResultSet rs1 = pre.executeQuery();
+				if (rs1.next()) {
+
+					// 正则匹配数据
 					Pattern pattern = Pattern.compile("PRIMARY KEY \\(\\`(.*)\\`\\)");
-					Matcher matcher =pattern.matcher(rs1.getString(2));
+					Matcher matcher = pattern.matcher(rs1.getString(2));
 					matcher.find();
-					String data="";
+					String data = "";
 					try {
 						data = matcher.group();
 					} catch (IllegalStateException e) {
 						System.out.println("没主键");
 					}
-					
-					//过滤对于字符
-					data=data.replaceAll("\\`|PRIMARY KEY \\(|\\)", "");
-					//拆分字符
-					String [] stringArr= data.split(",");
-					System.out.println("主键为:"+Arrays.toString(stringArr));
+
+					// 过滤对于字符
+					data = data.replaceAll("\\`|PRIMARY KEY \\(|\\)", "");
+					// 拆分字符
+					String[] stringArr = data.split(",");
+					System.out.println("主键为:" + Arrays.toString(stringArr));
 				}
-				System.out.println("------------------------------");		
-				
+				System.out.println("------------------------------");
+
 				// 查要生成实体类的表
 				String sql = "select * from " + tablename;
 
@@ -114,7 +125,7 @@ public class GenEntityMysql {
 				for (int i = 0; i < size; i++) {
 					colnames[i] = rsmd.getColumnName(i + 1).toLowerCase();
 					colTypes[i] = rsmd.getColumnTypeName(i + 1);
-					
+
 					if (colTypes[i].equalsIgnoreCase("datetime")) {
 						f_util = true;
 					}
@@ -124,20 +135,20 @@ public class GenEntityMysql {
 
 					String clone = colTypes[i].toLowerCase();
 
-				//	System.out.println("clone:" + clone);
+					// System.out.println("clone:" + clone);
 
 					if (clone.contains("decimal")) {
 						f_decimal = true;
 					}
-					
+
 					if (clone.equals("date") || clone.equals("time") || clone.equals("timestamp")) {
 						f_date = true;
 					}
-					
+
 					colSizes[i] = rsmd.getColumnDisplaySize(i + 1);
 				}
 
-				String content = parse(colnames, colTypes, colSizes,columnComments);
+				String content = parse(colnames, colTypes, colSizes, columnComments);
 
 				try {
 					File directory = new File("");
@@ -151,22 +162,28 @@ public class GenEntityMysql {
 					// "/src/"+path.substring(path.lastIndexOf("/com/",
 					// path.length()), path.length()) + initcap(tablename) +
 					// ".java";
-					
+
 					String[] dire = packageOutPath.split("\\.");
 					String createPath = directory.getAbsolutePath() + "/src/main/java";
 					// 循环生成目录
 					for (int i = 0; i < dire.length; i++) {
-						createPath = createPath +"/" +dire[i];
+						createPath = createPath + "/" + dire[i];
 						// 判断文件是否存在
 						File directoryExist = new File(createPath);
 						// 不存在则创建一个目录出来
-						if(!directoryExist.exists()){
+						if (!directoryExist.exists()) {
 							directoryExist.mkdir();
 						}
 					}
 					
+					String tableName = this.tablename;
+					// 使用驼峰命名法
+					if (isHumpNomenclature) {
+						tableName = useHumpNomenclature(tableName);
+					}
+					
 					String outputPath = directory.getAbsolutePath() + "/src/main/java/"
-							+ this.packageOutPath.replace(".", "/") + "/" + initcap(tablename) + ".java";
+							+ this.packageOutPath.replace(".", "/") + "/" + initcap(tableName) + ".java";
 					FileWriter fw = new FileWriter(outputPath);
 					System.out.println(outputPath);
 					PrintWriter pw = new PrintWriter(fw);
@@ -177,7 +194,7 @@ public class GenEntityMysql {
 					e.printStackTrace();
 				}
 			}
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -189,7 +206,32 @@ public class GenEntityMysql {
 			// }
 		}
 	}
+	
+	/**
+	 * @Author linshiqin
+	 *         <p>
+	 *         <li>2019年5月29日-下午4:12:22</li>
+	 *         <li>功能说明：将字段修改为驼峰命名法</li>
+	 *         </p>
+	 * @param str
+	 * @return
+	 */
+	private String useHumpNomenclature(String str){
+		
+		String[] strArr = str.split("_");
 
+		if (strArr.length > 1) {
+			StringBuffer sb = new StringBuffer();
+			sb.append(strArr[0]);
+			for (int j = 1; j < strArr.length; j++) {
+				sb.append(initcap(strArr[j]));
+			}
+			return sb.toString();
+		}
+		
+		return str;
+	}
+	
 	/**
 	 * @Author linshiqin
 	 *         <p>
@@ -209,7 +251,7 @@ public class GenEntityMysql {
 	 * @param colnames
 	 * @param colTypes
 	 * @param colSizes
-	 * @param columnComments 
+	 * @param columnComments
 	 * @return
 	 */
 	private String parse(String[] colnames, String[] colTypes, int[] colSizes, List<String> columnComments) {
@@ -230,15 +272,22 @@ public class GenEntityMysql {
 		if (f_date) {
 			sb.append("import java.util.Date;\r\n");
 		}
+		
+		String tableName = this.tablename;
+		// 使用驼峰命名法
+		if (isHumpNomenclature) {
+			tableName = useHumpNomenclature(tableName);
+		}
+		
 		// 注释部分
 		sb.append("   /**\r\n");
 		sb.append("    * " + tablename + " 实体类\r\n");
 		sb.append("    * " + new Date() + " " + this.authorName + "\r\n");
 		sb.append("    */ \r\n");
 		// 实体部分
-		sb.append("\r\n\r\npublic class " + initcap(tablename) + "{\r\n");
+		sb.append("\r\n\r\npublic class " + initcap(tableName) + "{\r\n");
 		processAllAttrs(sb);// 属性
-		processAllMethod(sb,columnComments);// get set方法
+		processAllMethod(sb, columnComments);// get set方法
 		sb.append("}\r\n");
 
 		// System.out.println(sb.toString());
@@ -253,7 +302,26 @@ public class GenEntityMysql {
 	private void processAllAttrs(StringBuffer sb) {
 
 		for (int i = 0; i < colnames.length; i++) {
-			sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + colnames[i] + ";\r\n");
+
+			String type = colTypes[i];
+			String attributes = colnames[i];
+
+			// 使用驼峰命名法
+			if (isHumpNomenclature) {
+
+				String[] attributesArr = attributes.split("_");
+
+				if (attributesArr.length > 1) {
+					StringBuffer sbAttributes = new StringBuffer();
+					sbAttributes.append(attributesArr[0]);
+					for (int j = 1; j < attributesArr.length; j++) {
+						sbAttributes.append(initcap(attributesArr[j]));
+					}
+					attributes = sbAttributes.toString();
+				}
+
+			}
+			sb.append("\tprivate " + sqlType2JavaType(type) + " " + attributes + ";\r\n");
 		}
 
 	}
@@ -262,33 +330,50 @@ public class GenEntityMysql {
 	 * 功能：生成所有方法
 	 * 
 	 * @param sb
-	 * @param columnComments 
+	 * @param columnComments
 	 */
 	private void processAllMethod(StringBuffer sb, List<String> columnComments) {
-		
+
 		/**
-		  * fiche no
-		  * 卡片号
-		  */
-		
+		 * fiche no 卡片号
+		 */
+
 		for (int i = 0; i < colnames.length; i++) {
-			
+
+			String colname = colnames[i];
+
+			// 使用驼峰命名法
+			if (isHumpNomenclature) {
+
+				String[] attributesArr = colname.split("_");
+
+				if (attributesArr.length > 1) {
+					StringBuffer sbAttributes = new StringBuffer();
+					sbAttributes.append(attributesArr[0]);
+					for (int j = 1; j < attributesArr.length; j++) {
+						sbAttributes.append(initcap(attributesArr[j]));
+					}
+					colname = sbAttributes.toString();
+				}
+
+			}
+
 			sb.append("\t/**").append("\r\n");// 注释部分
-			sb.append("\t  * "+colnames[i]).append("\r\n");// 注释部分
-			sb.append("\t  * "+columnComments.get(i)).append("\r\n");// 注释部分
+			sb.append("\t  * " + colnames[i]).append("\r\n");// 注释部分
+			sb.append("\t  * " + columnComments.get(i)).append("\r\n");// 注释部分
 			sb.append("\t  */").append("\r\n");// 注释部分
-			
-			sb.append("\tpublic void set" + initcap(colnames[i]) + "(" + sqlType2JavaType(colTypes[i]) + " "
-					+ colnames[i] + "){\r\n");
-			sb.append("\t\tthis." + colnames[i] + "=" + colnames[i] + ";\r\n");
+
+			sb.append("\tpublic void set" + initcap(colname) + "(" + sqlType2JavaType(colTypes[i]) + " " + colname
+					+ "){\r\n");
+			sb.append("\t\tthis." + colname + "=" + colname + ";\r\n");
 			sb.append("\t}\r\n");
-			
+
 			sb.append("\t/**").append("\r\n");// 注释部分
-			sb.append("\t  * "+colnames[i]).append("\r\n");// 注释部分
-			sb.append("\t  * "+columnComments.get(i)).append("\r\n");// 注释部分
+			sb.append("\t  * " + colnames[i]).append("\r\n");// 注释部分
+			sb.append("\t  * " + columnComments.get(i)).append("\r\n");// 注释部分
 			sb.append("\t  */").append("\r\n");// 注释部分
-			sb.append("\tpublic " + sqlType2JavaType(colTypes[i]) + " get" + initcap(colnames[i]) + "(){\r\n");
-			sb.append("\t\treturn " + colnames[i] + ";\r\n");
+			sb.append("\tpublic " + sqlType2JavaType(colTypes[i]) + " get" + initcap(colname) + "(){\r\n");
+			sb.append("\t\treturn " + colname + ";\r\n");
 			sb.append("\t}\r\n");
 		}
 
@@ -306,14 +391,14 @@ public class GenEntityMysql {
 		if (ch[0] >= 'a' && ch[0] <= 'z') {
 			ch[0] = (char) (ch[0] - 32);
 		}
-		
-//		for (int i = 1; i < ch.length; i++) {
-//			
-//			if (ch[i] >= 'a' && ch[i] <= 'z') {
-//				ch[i] = (char) (ch[i] + 32);
-//			}
-//		}
-		
+
+		// for (int i = 1; i < ch.length; i++) {
+		//
+		// if (ch[i] >= 'a' && ch[i] <= 'z') {
+		// ch[i] = (char) (ch[i] + 32);
+		// }
+		// }
+
 		return new String(ch);
 	}
 
@@ -324,7 +409,7 @@ public class GenEntityMysql {
 	 * @return
 	 */
 	private String sqlType2JavaType(String sqlType) {
-		//System.out.println(sqlType);
+		// System.out.println(sqlType);
 		if (sqlType.equalsIgnoreCase("bit")) {
 			return "boolean";
 		} else if (sqlType.equalsIgnoreCase("tinyint")) {
