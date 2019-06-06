@@ -21,7 +21,6 @@ public class GenEntityMysqlDTO {
 	private String packageOutPathEntity = "com.lsq.db.entity";// 指定实体生成所在包的路径
 	private String packageOutPath = "com.lsq.db.dao";// 指定实体生成所在包的路径
 	private String authorName = "linshiq";// 作者名字
-	private String tablename = "";// 表名
 
 	// 数据库连接
 	private String dbUrl = "jdbc:mysql://localhost:3306/lsq";
@@ -58,14 +57,6 @@ public class GenEntityMysqlDTO {
 
 	public void setAuthorName(String authorName) {
 		this.authorName = authorName;
-	}
-
-	public String getTablename() {
-		return tablename;
-	}
-
-	public void setTablename(String tablename) {
-		this.tablename = tablename;
 	}
 
 	public boolean isHumpNomenclature() {

@@ -54,7 +54,6 @@ public class GenEntityMysql {
 		
 		this.packageOutPath = genEntityMysqlDTO.getPackageOutPath();
 		this.authorName = genEntityMysqlDTO.getAuthorName();
-		this.tablename = genEntityMysqlDTO.getTablename();
 		this.URL = genEntityMysqlDTO.getDbUrl();
 		this.NAME = genEntityMysqlDTO.getDbName();
 		this.PASS = genEntityMysqlDTO.getDbPass();

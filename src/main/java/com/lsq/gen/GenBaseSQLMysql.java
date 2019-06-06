@@ -19,62 +19,77 @@ import java.util.regex.Pattern;
 
 import com.lsq.bean.GenEntityMysqlDTO;
 
-public class GenBaseSQLMysql {
-
-	private String packageOutPathEntity = "com.lsq.db.entity";// 指定实体生成所在包的路径
-	private String packageOutPath = "com.lsq.db.dao";// 指定实体生成所在包的路径
-	private String authorName = "linshiq";// 作者名字
-	private String tablename = "";// 表名
-
-	// 数据库连接
-	private String URL = "jdbc:mysql://localhost:3306/lsq";
-	private String NAME = "root";
-	private String PASS = "qqqq";
-	private String DRIVER = "com.mysql.jdbc.Driver";
-
+public class GenBaseSQLMysql extends BaseSQL{
+	
 	/**
-	 * 是否采用驼峰命名法 例:private String startDate;
-	 * 
-	 * 不采用则默认为 :private String start_date;
-	 */
-	private boolean isHumpNomenclature = true;
-
-	public GenBaseSQLMysql(boolean isHumpNomenclature, String tablename) {
-		this.isHumpNomenclature = isHumpNomenclature;
-		this.tablename = tablename;
-	}
-
-	/*
-	 * 构造函数
-	 */
-	/**
+	 * @Author linshiqin
+	 *         <p>
+	 *         <li>2019年6月6日-下午4:19:53</li>
+	 *         <li>功能说明：生成DB库中所有的表的基础SQL信息</li>
+	 *         </p>
 	 * @param genEntityMysqlDTO
-	 * @param isRun 是否需要执行生成方法(注意,一旦选择了true,就会默认生成所有表的信息)
 	 */
-	public GenBaseSQLMysql(GenEntityMysqlDTO genEntityMysqlDTO,boolean isRun) {
-
+	public void genAllDbTableSQLInfo(GenEntityMysqlDTO genEntityMysqlDTO){
 		this.packageOutPathEntity = genEntityMysqlDTO.getPackageOutPathEntity();
 		this.packageOutPath = genEntityMysqlDTO.getPackageOutPath();
 		this.authorName = genEntityMysqlDTO.getAuthorName();
-		this.tablename = genEntityMysqlDTO.getTablename();
 		this.URL = genEntityMysqlDTO.getDbUrl();
 		this.NAME = genEntityMysqlDTO.getDbName();
 		this.PASS = genEntityMysqlDTO.getDbPass();
 		this.DRIVER = genEntityMysqlDTO.getDbDriver();
 		this.isHumpNomenclature = genEntityMysqlDTO.isHumpNomenclature();
 
-		if(isRun){
-			publicProcess();
-		}
+		publicProcess();// 生成数据库
 	}
-
-	/*
-	 * 构造函数
+	
+	/**
+	 * @Author linshiqin
+	 *         <p>
+	 *         <li>2019年6月6日-下午4:19:53</li>
+	 *         <li>功能说明：根据默认信息生成DB库中所有的表的基础SQL信息</li>
+	 *         </p>
+	 * @param genEntityMysqlDTO
 	 */
-	public GenBaseSQLMysql() {
-		publicProcess();
+	public void genAllDbTableSQLInfoByDefaultInfo(){
+		
+		publicProcess();// 生成数据库
 	}
+	
+	/**
+	 * @Author linshiqin
+	 *         <p>
+	 *         <li>2019年6月6日-下午4:23:16</li>
+	 *         <li>功能说明：设置生成基础SQL所需的信息,不会调用生成方法,需要自己调用</li>
+	 *         </p>
+	 * @param genEntityMysqlDTO
+	 * @param tablename
+	 */
+	public void setGenBaseSQLDefaultInfo(GenEntityMysqlDTO genEntityMysqlDTO,String tablename) {
 
+		this.packageOutPathEntity = genEntityMysqlDTO.getPackageOutPathEntity();
+		this.packageOutPath = genEntityMysqlDTO.getPackageOutPath();
+		this.authorName = genEntityMysqlDTO.getAuthorName();
+		this.URL = genEntityMysqlDTO.getDbUrl();
+		this.NAME = genEntityMysqlDTO.getDbName();
+		this.PASS = genEntityMysqlDTO.getDbPass();
+		this.DRIVER = genEntityMysqlDTO.getDbDriver();
+		this.isHumpNomenclature = genEntityMysqlDTO.isHumpNomenclature();
+		
+		this.tablename = tablename;
+	}
+	
+	public void genBaseSQLMysqlByDefaultInfo(boolean isHumpNomenclature, String tablename) {
+		this.isHumpNomenclature = isHumpNomenclature;
+		this.tablename = tablename;
+	}
+	
+	/**
+	 * @Author linshiqin
+	 *         <p>
+	 *         <li>2019年6月6日-下午4:23:41</li>
+	 *         <li>功能说明：执行生成基础SQL</li>
+	 *         </p>
+	 */
 	private void publicProcess() {
 		// 创建连接
 		Connection con;
@@ -634,16 +649,4 @@ public class GenBaseSQLMysql {
 		}
 
 	}
-
-	/**
-	 * 出口 TODO
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-
-		new GenBaseSQLMysql();
-
-	}
-
 }

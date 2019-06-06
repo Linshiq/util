@@ -27,25 +27,7 @@ import com.lsq.bean.GenEntityMysqlDTO;
  *         <li>-----------------------------------------------------------</li>
  *         </p>
  */
-public class GenPointBaseSQLMysql {
-
-	private String packageOutPathEntity = "com.lsq.db.entity";// 指定实体生成所在包的路径
-	private String packageOutPath = "com.lsq.db.dao";// 指定实体生成所在包的路径
-	private String authorName = "linshiq";// 作者名字
-	private String tablename = "";// 表名
-
-	// 数据库连接
-	private String URL = "jdbc:mysql://localhost:3306/lsq";
-	private String NAME = "root";
-	private String PASS = "qqqq";
-	private String DRIVER = "com.mysql.jdbc.Driver";
-
-	/**
-	 * 是否采用驼峰命名法 例:private String startDate;
-	 * 
-	 * 不采用则默认为 :private String start_date;
-	 */
-	private boolean isHumpNomenclature = true;
+public class GenPointBaseSQLMysql extends BaseSQL{
 	
 	private boolean isDefault = true;
 	
@@ -74,7 +56,6 @@ public class GenPointBaseSQLMysql {
 		this.packageOutPathEntity = genEntityMysqlDTO.getPackageOutPathEntity();
 		this.packageOutPath = genEntityMysqlDTO.getPackageOutPath();
 		this.authorName = genEntityMysqlDTO.getAuthorName();
-		this.tablename = genEntityMysqlDTO.getTablename();
 		this.URL = genEntityMysqlDTO.getDbUrl();
 		this.NAME = genEntityMysqlDTO.getDbName();
 		this.PASS = genEntityMysqlDTO.getDbPass();
@@ -136,11 +117,12 @@ public class GenPointBaseSQLMysql {
 				
 				if(isDefault){
 				
-					GenBaseSQLMysql genBaseSQLMysql = new GenBaseSQLMysql(isHumpNomenclature, tablename);
+					GenBaseSQLMysql genBaseSQLMysql = new GenBaseSQLMysql();
+					genBaseSQLMysql.genBaseSQLMysqlByDefaultInfo(isHumpNomenclature, tablename);
 					genBaseSQLMysql.genBaseSQLMysqlProcess(con, pStemt);
 				}else {
-					genEntityMysqlDTO.setTablename(tablename);
-					GenBaseSQLMysql genBaseSQLMysql = new GenBaseSQLMysql(genEntityMysqlDTO,false);
+					GenBaseSQLMysql genBaseSQLMysql = new GenBaseSQLMysql();
+					genBaseSQLMysql.setGenBaseSQLDefaultInfo(genEntityMysqlDTO, tablename);
 					genBaseSQLMysql.genBaseSQLMysqlProcess(con, pStemt);
 				}
 				
