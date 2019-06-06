@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.lsq.bean.GenEntityMysqlDTO;
+
 public class GenBaseSQLMysql {
 
 	private String packageOutPathEntity = "com.lsq.db.entity";// 指定实体生成所在包的路径
@@ -25,27 +27,55 @@ public class GenBaseSQLMysql {
 	private String tablename = "";// 表名
 
 	// 数据库连接
-	private static final String URL = "jdbc:mysql://localhost:3306/lsq";
-	private static final String NAME = "root";
-	private static final String PASS = "qqqq";
-	private static final String DRIVER = "com.mysql.jdbc.Driver";
-	
+	private String URL = "jdbc:mysql://localhost:3306/lsq";
+	private String NAME = "root";
+	private String PASS = "qqqq";
+	private String DRIVER = "com.mysql.jdbc.Driver";
+
 	/**
 	 * 是否采用驼峰命名法 例:private String startDate;
 	 * 
 	 * 不采用则默认为 :private String start_date;
 	 */
 	private boolean isHumpNomenclature = true;
-	
-	public GenBaseSQLMysql(boolean isHumpNomenclature,String tablename) {
+
+	public GenBaseSQLMysql(boolean isHumpNomenclature, String tablename) {
 		this.isHumpNomenclature = isHumpNomenclature;
 		this.tablename = tablename;
 	}
-	
+
+	/*
+	 * 构造函数
+	 */
+	/**
+	 * @param genEntityMysqlDTO
+	 * @param isRun 是否需要执行生成方法(注意,一旦选择了true,就会默认生成所有表的信息)
+	 */
+	public GenBaseSQLMysql(GenEntityMysqlDTO genEntityMysqlDTO,boolean isRun) {
+
+		this.packageOutPathEntity = genEntityMysqlDTO.getPackageOutPathEntity();
+		this.packageOutPath = genEntityMysqlDTO.getPackageOutPath();
+		this.authorName = genEntityMysqlDTO.getAuthorName();
+		this.tablename = genEntityMysqlDTO.getTablename();
+		this.URL = genEntityMysqlDTO.getDbUrl();
+		this.NAME = genEntityMysqlDTO.getDbName();
+		this.PASS = genEntityMysqlDTO.getDbPass();
+		this.DRIVER = genEntityMysqlDTO.getDbDriver();
+		this.isHumpNomenclature = genEntityMysqlDTO.isHumpNomenclature();
+
+		if(isRun){
+			publicProcess();
+		}
+	}
+
 	/*
 	 * 构造函数
 	 */
 	public GenBaseSQLMysql() {
+		publicProcess();
+	}
+
+	private void publicProcess() {
 		// 创建连接
 		Connection con;
 
@@ -69,8 +99,8 @@ public class GenBaseSQLMysql {
 
 				String tablename = rs.getString(3);
 				this.tablename = tablename;
-				
-				genBaseSQLMysqlProcess(con,pStemt);
+
+				genBaseSQLMysqlProcess(con, pStemt);
 			}
 
 		} catch (SQLException e) {
@@ -84,7 +114,7 @@ public class GenBaseSQLMysql {
 			// }
 		}
 	}
-	
+
 	/**
 	 * @Author linshiqin
 	 *         <p>
@@ -92,10 +122,10 @@ public class GenBaseSQLMysql {
 	 *         <li>功能说明：生成基础SQL</li>
 	 *         </p>
 	 * @param con
-	 * @param pStemt 
+	 * @param pStemt
 	 */
-	public void genBaseSQLMysqlProcess(Connection con, PreparedStatement pStemt) throws SQLException{
-		
+	public void genBaseSQLMysqlProcess(Connection con, PreparedStatement pStemt) throws SQLException {
+
 		// 获取所有的主键
 		// oracle 语句 select
 		// table_name,dbms_metadata.get_ddl('TABLE','TABLE_NAME')from
@@ -148,10 +178,10 @@ public class GenBaseSQLMysql {
 				File directory = new File("");
 				// System.out.println("绝对路径："+directory.getAbsolutePath());
 				// System.out.println("相对路径："+directory.getCanonicalPath());
-				String path = this.getClass().getResource("").getPath();
-
-				System.out.println(path);
-				System.out.println("src/?/" + path.substring(path.lastIndexOf("/com/", path.length())));
+//				String path = this.getClass().getResource("").getPath();
+//
+//				System.out.println(path);
+//				System.out.println("src/?/" + path.substring(path.lastIndexOf("/com/", path.length())));
 				// String outputPath = directory.getAbsolutePath()+
 				// "/src/"+path.substring(path.lastIndexOf("/com/",
 				// path.length()), path.length()) + initcap(tablename) +
@@ -169,13 +199,13 @@ public class GenBaseSQLMysql {
 						directoryExist.mkdir();
 					}
 				}
-				
+
 				String tableName = this.tablename;
 				// 使用驼峰命名法
 				if (isHumpNomenclature) {
 					tableName = useHumpNomenclature(tableName);
 				}
-				
+
 				String outputPath = directory.getAbsolutePath() + "/src/main/java/"
 						+ this.packageOutPath.replace(".", "/") + "/" + initcap(tableName) + "Dao.java";
 
@@ -190,7 +220,7 @@ public class GenBaseSQLMysql {
 			}
 		}
 	}
-	
+
 	/**
 	 * @Author linshiqin
 	 *         <p>
@@ -200,8 +230,8 @@ public class GenBaseSQLMysql {
 	 * @param str
 	 * @return
 	 */
-	private String useHumpNomenclature(String str){
-		
+	private String useHumpNomenclature(String str) {
+
 		String[] strArr = str.split("_");
 
 		if (strArr.length > 1) {
@@ -212,10 +242,10 @@ public class GenBaseSQLMysql {
 			}
 			return sb.toString();
 		}
-		
+
 		return str;
 	}
-	
+
 	/**
 	 * 功能：生成实体类主体代码
 	 * 
@@ -277,13 +307,13 @@ public class GenBaseSQLMysql {
 		if (f_date) {
 			sb.append("import java.util.Date;\r\n");
 		}
-		
+
 		String tableName = this.tablename;
 		// 使用驼峰命名法
 		if (isHumpNomenclature) {
 			tableName = useHumpNomenclature(tableName);
 		}
-		
+
 		sb.append("import java.util.List;\r\n");
 		sb.append("import org.apache.ibatis.annotations.Delete;\r\n");
 		sb.append("import org.apache.ibatis.annotations.Insert;\r\n");
@@ -293,7 +323,7 @@ public class GenBaseSQLMysql {
 		sb.append("import org.apache.ibatis.annotations.Param;\r\n");
 		sb.append("import " + packageOutPathEntity + "." + initcap(tableName) + ";\r\n");
 		sb.append("\r\n");
-		
+
 		// 注释部分
 		sb.append("   /**\r\n");
 		sb.append("    * " + tablename + " 基础SQL\r\n");
@@ -346,13 +376,13 @@ public class GenBaseSQLMysql {
 		}
 
 		valuesSb.delete(valuesSb.length() - 1, valuesSb.length());
-		
+
 		String tableName = this.tablename;
 		// 使用驼峰命名法
 		if (isHumpNomenclature) {
 			tableName = useHumpNomenclature(tableName);
 		}
-		
+
 		// 开始组装
 		StringBuffer overParm = new StringBuffer();
 		overParm.append("INSERT INTO " + tablename + " ( " + insertInfoSb.toString() + " ) ");
@@ -407,13 +437,13 @@ public class GenBaseSQLMysql {
 			}
 
 		}
-		
+
 		String tableName = this.tablename;
 		// 使用驼峰命名法
 		if (isHumpNomenclature) {
 			tableName = useHumpNomenclature(tableName);
 		}
-		
+
 		orderBySb.delete(orderBySb.length() - 1, orderBySb.length());
 		overParm.delete(overParm.length() - 5, overParm.length());
 		// 补充selectbyPrimarykey
@@ -482,13 +512,13 @@ public class GenBaseSQLMysql {
 		}
 
 		whereSb.delete(whereSb.length() - 5, whereSb.length());
-		
+
 		String tableName = this.tablename;
 		// 使用驼峰命名法
 		if (isHumpNomenclature) {
 			tableName = useHumpNomenclature(tableName);
 		}
-		
+
 		StringBuffer overParm = new StringBuffer();
 		overParm.append("UPDATE " + tablename + " SET " + setSb.toString() + " WHERE " + whereSb.toString());
 

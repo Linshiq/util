@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.lsq.bean.GenEntityMysqlDTO;
+
 public class GenEntityMysql {
 
 	private String packageOutPath = "com.lsq.db.entity";// 指定实体生成所在包的路径
@@ -40,15 +42,38 @@ public class GenEntityMysql {
 	private boolean isHumpNomenclature = false;
 
 	// 数据库连接
-	private static final String URL = "jdbc:mysql://localhost:3306/lsq";
-	private static final String NAME = "root";
-	private static final String PASS = "qqqq";
-	private static final String DRIVER = "com.mysql.jdbc.Driver";
-
+	private  String URL = "jdbc:mysql://localhost:3306/lsq";
+	private  String NAME = "root";
+	private  String PASS = "qqqq";
+	private  String DRIVER = "com.mysql.jdbc.Driver";
+	
+	/*
+	 * 构造函数
+	 */
+	public GenEntityMysql(GenEntityMysqlDTO genEntityMysqlDTO) {
+		
+		this.packageOutPath = genEntityMysqlDTO.getPackageOutPath();
+		this.authorName = genEntityMysqlDTO.getAuthorName();
+		this.tablename = genEntityMysqlDTO.getTablename();
+		this.URL = genEntityMysqlDTO.getDbUrl();
+		this.NAME = genEntityMysqlDTO.getDbName();
+		this.PASS = genEntityMysqlDTO.getDbPass();
+		this.DRIVER = genEntityMysqlDTO.getDbDriver();
+		this.isHumpNomenclature = genEntityMysqlDTO.isHumpNomenclature();
+		publicProcess();
+	}
+	
 	/*
 	 * 构造函数
 	 */
 	public GenEntityMysql() {
+		publicProcess();
+	}
+	
+	/*
+	 * 构造函数
+	 */
+	private void publicProcess() {
 		// 创建连接
 		Connection con;
 
@@ -154,10 +179,10 @@ public class GenEntityMysql {
 					File directory = new File("");
 					// System.out.println("绝对路径："+directory.getAbsolutePath());
 					// System.out.println("相对路径："+directory.getCanonicalPath());
-					String path = this.getClass().getResource("").getPath();
-
-					System.out.println(path);
-					System.out.println("src/?/" + path.substring(path.lastIndexOf("/com/", path.length())));
+//					String path = this.getClass().getResource("").getPath();
+//
+//					System.out.println(path);
+//					System.out.println("src/?/" + path.substring(path.lastIndexOf("/com/", path.length())));
 					// String outputPath = directory.getAbsolutePath()+
 					// "/src/"+path.substring(path.lastIndexOf("/com/",
 					// path.length()), path.length()) + initcap(tablename) +
